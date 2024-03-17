@@ -1,25 +1,25 @@
-import React, { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
 
 export const GameCanvas = () => {
   const canvasRef = useRef(null);
   const [balls, setBalls] = useState([]);
-  const [isBallClicked, setIsBallClicked] = useState(false); // Состояние для отслеживания того, кликнут ли шар
+  const [isBallClicked, setIsBallClicked] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
-    const context = canvas.getContext('2d');
+    
+    const context = canvas.getContext('2d');   
     if (!context) return;
 
     const initialBalls = generateInitialBalls(canvas.width, canvas.height);
     setBalls(initialBalls);
-  }, []);
+    }, []);
 
-  function generateInitialBalls(canvasWidth, canvasHeight) {
+  const generateInitialBalls = (canvasWidth, canvasHeight) => {
     const numberOfBalls = 10;
     const generatedBalls = [];
-    for (let i = 0; i < numberOfBalls; i++) {
+    for (let index = 0; index < numberOfBalls; index ++) {
       const x = Math.random() * canvasWidth;
       const y = Math.random() * canvasHeight;
       const radius = Math.random() * 20 + 10;
@@ -29,12 +29,12 @@ export const GameCanvas = () => {
     return generatedBalls;
   }
 
-  function handleClick(event) {
+  const handleCanvasClick = (event) => {    
     // Обработчик клика на холсте
     const canvas = canvasRef.current;
     if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
+    
+    const rect = canvas.getBoundingClientRect();    
     const mouseX = event.clientX - rect.left;
     const mouseY = event.clientY - rect.top;
 
@@ -42,17 +42,17 @@ export const GameCanvas = () => {
     balls.forEach(ball => {
       const distance = Math.sqrt((mouseX - ball.x) ** 2 + (mouseY - ball.y) ** 2);
       if (distance <= ball.radius) {
-        setIsBallClicked(true); // Устанавливаем состояние клика на шар
+        setIsBallClicked(true); 
       }
     });
-  }
+  };
 
-  function drawBall(context, ball) {
+  const drawBall = (context, ball) => {
     const { x, y, radius, color } = ball;
-    context.beginPath();
-    context.arc(x, y, radius, 0, Math.PI * 2);
-    context.fillStyle = color;
-    context.fill();
+    context.beginPath();   
+    context.arc(x, y, radius, 0, Math.PI * 2);    
+    context.fillStyle = color;  
+    context.fill();  
     context.closePath();
   }
 
@@ -63,18 +63,16 @@ export const GameCanvas = () => {
     const context = canvas.getContext('2d');
     if (!context) return;
 
-    context.clearRect(0, 0, canvas.width, canvas.height); // Очищаем холст перед рисованием
+    context.clearRect(0, 0, canvas.width, canvas.height);
 
     balls.forEach(ball => drawBall(context, ball));
+    
+    canvas.addEventListener('click', handleCanvasClick);
 
-    // Добавляем обработчик клика на холсте
-    canvas.addEventListener('click', handleClick);
-
-    return () => {
-      // Убираем обработчик клика при размонтировании компонента
-      canvas.removeEventListener('click', handleClick);
+    return () => {    
+      canvas.removeEventListener('click', handleCanvasClick);
     };
-  }, [balls]); // Зависимость от состояния balls
+  }, [balls]);
 
   return <canvas ref={canvasRef} width={800} height={600} />;
 };
