@@ -101,6 +101,14 @@ export const GameCanvas = () => {
     context.closePath();
   };
 
+  // столкнулись ли шары?
+  const checkCollision = (ball1, ball2) => {
+    const dx = ball1.x - ball2.x;
+    const dy = ball1.y - ball2.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    return distance < (ball1.radius + ball2.radius);
+  }
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
