@@ -108,19 +108,66 @@ export const GameCanvas = () => {
   };
 
   // столкнулись ли шары между собой?
-  const checkCollision = (ball1, ball2) => {
+  const checkCollision = (balls, index1, index2) => {
+    const ball1 = balls[index1];
+    const ball2 = balls[index2];
     const dx = ball1.x - ball2.x;
-    // console.log(`dx равно - ${dx}`);
     const dy = ball1.y - ball2.y;
-    // console.log(`dy равно - ${dy}`);
     const distance = Math.sqrt(dx * dx + dy * dy);
-    // console.log(`distance равно - ${distance}`);
-    // console.log(`сумма двух радиусов - ${ball1.radius + ball2.radius}`);
 
-    // console.log(`столкнулись ли шары - ${distance < (ball1.radius + ball2.radius)}`);
+    if (distance < ball1.radius + ball2.radius) {
+      // Рассчитываем новые скорости только для столкнувшихся шаров
+      const angle = Math.atan2(dy, dx);
+      const magnitude1 = Math.sqrt(ball1.vx * ball1.vx + ball1.vy * ball1.vy);
+      const magnitude2 = Math.sqrt(ball2.vx * ball2.vx + ball2.vy * ball2.vy);
+      const direction1 = Math.atan2(ball1.vy, ball1.vx);
+      const direction2 = Math.atan2(ball2.vy, ball2.vx);
 
+      const newVx1 = magnitude1 * Math.cos(direction1 - angle);
+      const newVy1 = magnitude1 * Math.sin(direction1 - angle);
+      const newVx2 = magnitude2 * Math.cos(direction2 - angle);
+      const newVy2 = magnitude2 * Math.sin(direction2 - angle);
 
-    return distance < (ball1.radius + ball2.radius);
+      // Устанавливаем новые скорости для столкнувшихся шаров
+      const updatedBalls = [...balls];
+      updatedBalls[index1].vx = newVx2 * Math.cos(angle) + newVx1 * Math.cos(angle + Math.PI / 2);
+      updatedBalls[index1].vy = newVy1 * Math.sin(angle) + newVy2 * Math.sin(angle + Math.PI / 2);
+      updatedBalls[index2].vx = newVx1 * Math.cos(angle) + newVx2 * Math.cos(angle + Math.PI / 2);
+      updatedBalls[index2].vy = newVy2 * Math.sin(angle) + newVy1 * Math.sin(angle + Math.PI / 2);
+
+      return updatedBalls; // Возвращаем массив с обновленными скоростями шаров
+    }
+
+    return balls; // Если столкновение не произошло, возвращаем исходный массив шаров
+  };
+
+  const updateBallPositions = () => {
+    setBalls(prevBalls => {
+      let updatedBalls = [...prevBalls];
+      for (let i = 0; i < updatedBalls.length; i++) {
+        for (let j = i + 1; j < updatedBalls.length; j++) {
+          updatedBalls = checkCollision(updatedBalls, i, j);
+        }
+      }
+
+      // Теперь обновляем позиции всех шаров с учетом возможных изменений скоростей
+      updatedBalls = updatedBalls.map(ball => {
+        const newX = ball.x + ball.vx;
+        const newY = ball.y + ball.vy;
+
+        // Проверяем столкновения с границами холста
+        if (newX - ball.radius < 0 || newX + ball.radius > canvasRef.current.width) {
+          ball.vx *= -1; // Изменяем направление скорости по оси X
+        }
+        if (newY - ball.radius < 0 || newY + ball.radius > canvasRef.current.height) {
+          ball.vy *= -1; // Изменяем направление скорости по оси Y
+        }
+
+        return { ...ball, x: newX, y: newY };
+      });
+
+      return updatedBalls;
+    });
   };
 
   useEffect(() => {
