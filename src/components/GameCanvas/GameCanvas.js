@@ -141,34 +141,34 @@ export const GameCanvas = () => {
     return balls; // Если столкновение не произошло, возвращаем исходный массив шаров
   };
 
-  const updateBallPositions = () => {
-    setBalls(prevBalls => {
-      let updatedBalls = [...prevBalls];
-      for (let i = 0; i < updatedBalls.length; i++) {
-        for (let j = i + 1; j < updatedBalls.length; j++) {
-          updatedBalls = checkCollision(updatedBalls, i, j);
-        }
-      }
+  // const updateBallPositions = () => {
+  //   setBalls(prevBalls => {
+  //     let updatedBalls = [...prevBalls];
+  //     for (let i = 0; i < updatedBalls.length; i++) {
+  //       for (let j = i + 1; j < updatedBalls.length; j++) {
+  //         updatedBalls = checkCollision(updatedBalls, i, j);
+  //       }
+  //     }
 
-      // Теперь обновляем позиции всех шаров с учетом возможных изменений скоростей
-      updatedBalls = updatedBalls.map(ball => {
-        const newX = ball.x + ball.vx;
-        const newY = ball.y + ball.vy;
+  //     // Теперь обновляем позиции всех шаров с учетом возможных изменений скоростей
+  //     updatedBalls = updatedBalls.map(ball => {
+  //       const newX = ball.x + ball.vx;
+  //       const newY = ball.y + ball.vy;
 
-        // Проверяем столкновения с границами холста
-        if (newX - ball.radius < 0 || newX + ball.radius > canvasRef.current.width) {
-          ball.vx *= -1; // Изменяем направление скорости по оси X
-        }
-        if (newY - ball.radius < 0 || newY + ball.radius > canvasRef.current.height) {
-          ball.vy *= -1; // Изменяем направление скорости по оси Y
-        }
+  //       // Проверяем столкновения с границами холста
+  //       if (newX - ball.radius < 0 || newX + ball.radius > canvasRef.current.width) {
+  //         ball.vx *= -1; // Изменяем направление скорости по оси X
+  //       }
+  //       if (newY - ball.radius < 0 || newY + ball.radius > canvasRef.current.height) {
+  //         ball.vy *= -1; // Изменяем направление скорости по оси Y
+  //       }
 
-        return { ...ball, x: newX, y: newY };
-      });
+  //       return { ...ball, x: newX, y: newY };
+  //     });
 
-      return updatedBalls;
-    });
-  };
+  //     return updatedBalls;
+  //   });
+  // };
 
   useEffect(() => {
     let collisionDetected = false; // Переменная для отслеживания столкновений
@@ -185,19 +185,14 @@ export const GameCanvas = () => {
     setIsCollision(collisionDetected); // Устанавливаем состояние isCollision в зависимости от обнаруженных столкновений
   }, [balls]);
 
-  useEffect(() => {
-    console.log(isCollision);
-  }, [balls]);
-
-
-  useEffect(() => {
-    // Проверка коллизий между всеми парами шаров
-    for (let i = 0; i < balls.length; i++) {
-      for (let j = i + 1; j < balls.length; j++) {
-        checkCollision(balls[i], balls[j]);
-      }
+useEffect(() => {
+  // Проверка коллизий между всеми парами шаров
+  for (let i = 0; i < balls.length; i++) {
+    for (let j = i + 1; j < balls.length; j++) {
+      return checkCollision(balls, i, j); // Передаем в функцию checkCollision массив balls
     }
-  }, [balls]);
+  }
+}, [balls]);
 
 
   useEffect(() => {
