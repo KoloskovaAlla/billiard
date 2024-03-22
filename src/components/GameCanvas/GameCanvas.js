@@ -171,46 +171,38 @@ export const GameCanvas = () => {
   //   }
   // }, [balls]);
 
-  useEffect(() => {
-    let collisionDetected = false; // Переменная для отслеживания столкновений
 
-    // Проверка коллизий между всеми парами шаров
+  const [collidingBalls, setCollidingBalls] = useState([]);
+
+  // useEffect для обнаружения столкновений
+  const [collisionDetected, setCollisionDetected] = useState(false);
+  const [processedCollision, setProcessedCollision] = useState(false);
+
+  useEffect(() => {
+    let collidingPairs = [];
     for (let i = 0; i < balls.length; i++) {
       for (let j = i + 1; j < balls.length; j++) {
         if (checkCollision(balls, i, j)) {
-          collisionDetected = true; // Если столкновение обнаружено, устанавливаем переменную в true
-          const ball1 = balls[i];
-          const ball2 = balls[j];
-          const dx = ball1.x - ball2.x;
-          const dy = ball1.y - ball2.y;
-          const angle = Math.atan2(dy, dx);
-          const magnitude1 = Math.sqrt(ball1.vx * ball1.vx + ball1.vy * ball1.vy);
-          const magnitude2 = Math.sqrt(ball2.vx * ball2.vx + ball2.vy * ball2.vy);
-          const direction1 = Math.atan2(ball1.vy, ball1.vx);
-          const direction2 = Math.atan2(ball2.vy, ball2.vx);
-          const newVx1 = magnitude1 * Math.cos(direction1 - angle);
-          const newVy1 = magnitude1 * Math.sin(direction1 - angle);
-          const newVx2 = magnitude2 * Math.cos(direction2 - angle);
-          const newVy2 = magnitude2 * Math.sin(direction2 - angle);
-
-          // Устанавливаем новые скорости для столкнувшихся шаров
-          const updatedBalls = [...balls];
-          updatedBalls[i].vx = newVx2 * Math.cos(angle) + newVx1 * Math.cos(angle + Math.PI / 2);
-          updatedBalls[i].vy = newVy1 * Math.sin(angle) + newVy2 * Math.sin(angle + Math.PI / 2);
-          updatedBalls[j].vx = newVx1 * Math.cos(angle) + newVx2 * Math.cos(angle + Math.PI / 2);
-          updatedBalls[j].vy = newVy2 * Math.sin(angle) + newVy1 * Math.sin(angle + Math.PI / 2);
-
-          // Обновляем состояние шаров
-          setBalls(updatedBalls);
-          break; // Прерываем внутренний цикл, если обнаружено столкновение
+          setCollisionDetected(true);
+          setCollidingBalls([balls[i], balls[j]]);
+          return;
         }
       }
-      if (collisionDetected) break; // Прерываем внешний цикл, если обнаружено столкновение
     }
+    setCollisionDetected(false);
+  }, [balls]);
 
-    console.log(collisionDetected);
-    setIsCollision(collisionDetected); // Устанавливаем состояние isCollision в зависимости от обнаруженных столкновений
-  }, []);
+  useEffect(() => {
+    if (collisionDetected && !processedCollision) {
+      console.log('Обновляем шары');
+      const updatedBalls = [...balls];
+      console.log('Обработали столкновение');
+      setProcessedCollision(true);
+    } else if (!collisionDetected && processedCollision) {
+      // Сбрасываем флаг обработанного столкновения, если столкновение больше не обнаружено
+      setProcessedCollision(false);
+    }
+  }, [collisionDetected, processedCollision]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
