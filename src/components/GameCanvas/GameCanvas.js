@@ -54,7 +54,7 @@ export const GameCanvas = () => {
   };
 
   const handleCanvasMouseMove = (event) => {
-    if (!isDragging || draggedBallIndex === null) return;
+    // if (!isDragging || draggedBallIndex === null) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -68,18 +68,19 @@ export const GameCanvas = () => {
 
     setPrevMousePosition({ x: mouseX, y: mouseY });
 
-    setBalls(prevBalls => {
-      const updatedBalls = [...prevBalls];
-      updatedBalls[draggedBallIndex].x += dx;
-      updatedBalls[draggedBallIndex].y += dy;
-
-      return updatedBalls;
-    });
+setBalls(prevBalls => {
+  const updatedBalls = [...prevBalls];
+  if (draggedBallIndex !== null) {
+    updatedBalls[draggedBallIndex].x += dx;
+    updatedBalls[draggedBallIndex].y += dy;
+  }
+  return updatedBalls;
+});
   };
 
   const handleCanvasMouseUp = () => {
-    setIsDragging(false);
-    setDraggedBallIndex(null);
+    // setIsDragging(false);
+    // setDraggedBallIndex(null);
   };
 
 
@@ -170,7 +171,35 @@ export const GameCanvas = () => {
   //     }
   //   }
   // }, [balls]);
+const updateBallPositions = () => {
+  setBalls(prevBalls => {
+    let updatedBalls = [...prevBalls];
+    for (let i = 0; i < updatedBalls.length; i++) {
+      // Обновляем позицию только если шар не перетаскивается мышью
+      if (!isDragging || i !== draggedBallIndex) {
+        updatedBalls[i].x += updatedBalls[i].vx;
+        updatedBalls[i].y += updatedBalls[i].vy;
 
+        // Проверяем столкновения с границами холста
+        if (
+          canvasRef.current?.width &&
+          canvasRef.current?.height &&
+          (updatedBalls[i].x - updatedBalls[i].radius < 0 || updatedBalls[i].x + updatedBalls[i].radius > canvasRef.current.width) ||
+          (updatedBalls[i].y - updatedBalls[i].radius < 0 || updatedBalls[i].y + updatedBalls[i].radius > canvasRef.current.height)
+        ) {
+          updatedBalls[i].vx *= -1; // Изменяем направление скорости по оси X
+          updatedBalls[i].vy *= -1; // Изменяем направление скорости по оси Y
+        }
+      }
+    }
+    return updatedBalls;
+  });
+};
+useEffect(() => {
+  if(!collisionDetected) return;
+  const animationFrame = requestAnimationFrame(updateBallPositions);
+  return () => cancelAnimationFrame(animationFrame);
+}, [balls]);
 
   const [collidingBalls, setCollidingBalls] = useState([]);
 
@@ -179,6 +208,7 @@ export const GameCanvas = () => {
   const [processedCollision, setProcessedCollision] = useState(false);
 
   useEffect(() => {
+    console.log()
     let collidingPairs = [];
     for (let i = 0; i < balls.length; i++) {
       for (let j = i + 1; j < balls.length; j++) {
@@ -195,7 +225,37 @@ export const GameCanvas = () => {
   useEffect(() => {
     if (collisionDetected && !processedCollision) {
       console.log('Обновляем шары');
-      const updatedBalls = [...balls];
+      const [ball1, ball2] = collidingBalls;
+
+  setBalls(prevBalls => {
+    let updatedBalls = [...prevBalls];
+
+    // Вычисляем направление столкновения
+    const dx = ball2.x - ball1.x;
+    const dy = ball2.y - ball1.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const normalX = dx / distance;
+    const normalY = dy / distance;
+
+    // Вычисляем проекции скоростей на вектор нормали
+    const v1n = normalX * ball1.vx + normalY * ball1.vy;
+    const v2n = normalX * ball2.vx + normalY * ball2.vy;
+
+    // Вычисляем новые скорости после столкновения (упругое соударение)
+    const m1 = ball1.radius * ball1.radius * Math.PI; // Масса шара 1 (пропорциональна площади)
+    const m2 = ball2.radius * ball2.radius * Math.PI; // Масса шара 2 (пропорциональна площади)
+    const v1nAfter = (v1n * (m1 - m2) + 2 * m2 * v2n) / (m1 + m2);
+    const v2nAfter = (v2n * (m2 - m1) + 2 * m1 * v1n) / (m1 + m2);
+
+    // Обновляем скорости шаров
+    ball1.vx += (v1nAfter - v1n) * normalX;
+    ball1.vy += (v1nAfter - v1n) * normalY;
+    ball2.vx += (v2nAfter - v2n) * normalX;
+    ball2.vy += (v2nAfter - v2n) * normalY;
+
+    console.log('Обновляем шары после столкновения');
+    return updatedBalls;
+  });
       console.log('Обработали столкновение');
       setProcessedCollision(true);
     } else if (!collisionDetected && processedCollision) {
